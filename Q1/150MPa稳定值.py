@@ -9,9 +9,9 @@ plt.rcParams['axes.unicode_minus'] = False # 用来正常显示负号
 # 常量
 
 pai = 3.1415926 # 圆周率
-P_0 = 100 # 初始压力
+P_0 = 150 # 初始压力
 V = 500*(10/2)**2*pai # 油管容积
-P_inside = 100 # 初始内管压力
+P_inside = 150 # 初始内管压力
 P_inlet = 160 # 入口压力
 P_outlet = 100 # 出口压力
 
@@ -62,7 +62,7 @@ def plot_2(T_open,loss):
     plt.tight_layout()
 
     # 保存矢量图表
-    plt.savefig('figs\\loss与T_open的关系.pdf', format='pdf')
+    plt.savefig('figs\\150MPa loss与T_open的关系.pdf', format='pdf')
 
 
 # 压力与弹性模量的关系E = poly3(P)
@@ -122,7 +122,7 @@ y_poly_fit = np.polyval(p, x)
 print('多项式拟合系数:', p)
 
 # 绘制图表
-plot_1(x, y, y_poly_fit)
+#plot_1(x, y, y_poly_fit)
 
 # 优化
 # 优化目标：使得P_t与P_inside的均方误差最小
@@ -130,8 +130,8 @@ plot_1(x, y, y_poly_fit)
 # 优化约束：T_open属于[0,100-10]
 # 优化方法：穷举搜索
 
-with open('result\\result_1.txt',  'w',encoding='UTF-8') as f:
-    T_Open = np.linspace(0, 4, 40)
+with open('result\\result_150.txt',  'w',encoding='UTF-8') as f:
+    T_Open = np.linspace(0, 8, 40)
     loss = []
     for T_open in T_Open:
         P_t = []
