@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pandas as pd
 from scipy.optimize import curve_fit
+import csv
 
 plt.rcParams['font.sans-serif'] = ['SimHei'] # 用来正常显示中文标签SimHei
 plt.rcParams['axes.unicode_minus'] = False # 用来正常显示负号
@@ -22,8 +23,11 @@ T = 100 # 划分周期
 C = 0.85 # 流量系数
 delta_p = P_inlet - P_inside # A小孔两边压差
 c = 100/2171.4-np.log(0.85) # 常数
+p=[ 1.00037752e-04,-1.08248140e-03, 5.47444434e+00, 1.53186841e+03]
+# 变量
 
 
+T_open_100=2.769230769230769 # 100MPa稳定时，单向阀开启时长
 
 def plot_1(x,y,y_poly_fit):
     # 绘制原始数据
@@ -103,6 +107,10 @@ def P(t,T_open):
     P_t.append(P_0+sum([E_poly3(P_t[int(10*j)],p)/rho_P(P_t[int(10*j)])/V*(I_j(j,T_open)-E_j(j)) for j in np.arange(0, t, 0.1)]))
     return P_t[int(10*t)]
 
+def find_closest(target, t_n):
+    closest_pair = min(t_n, key=lambda x: abs(x[0] - target))
+    return closest_pair
+
 # 主程序
 
 # 导入数据
@@ -116,40 +124,42 @@ y = data.iloc[:, 1]
 x = data['压力(MPa)']
 y = data['弹性模量(MPa)']
 
-# 多项式拟合（例如三次多项式）
-p = np.polyfit(x, y, 3)  # 拟合三次多项式
-y_poly_fit = np.polyval(p, x)
-print('多项式拟合系数:', p)
+t_n=[]
+t_e1=2000
+t_e2=5000
+t_e3=10000
 
-# 绘制图表
-plot_1(x, y, y_poly_fit)
+for delt_t in np.arange(0, 2, 0.1):
+    if delt_t==0:
+        continue
+    P_t=[P_0] # 油管随时间变化的压力
+    t=0.1
+    print('delt_t:',delt_t)
+    while P_t[-1] < 150:
+        P(round(t,1),T_open_100+delt_t)
+        if P_t[-1]== P_t[-2]:
+            while round(t,1) % 100 != 0:
+                P_t.append(P_t[-1])
+                t+=0.1
+        t+=0.1
+        print('t:',t,'P_t:',P_t[-1])
+    t_n.append((round(t,1), delt_t))
 
-# 优化
-# 优化目标：使得P_t与P_inside的均方误差最小
-# 优化变量：T_open
-# 优化约束：T_open属于[0,100-10]
-# 优化方法：穷举搜索
+# 将 t_n 列表写入 CSV 文件
+with open('t_n_data.csv', 'w', newline='',encoding='UTF-8') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['Time', 'delt_t'])
+    writer.writerows(t_n)
 
-with open('result\\result_1.txt',  'w',encoding='UTF-8') as f:
-    T_Open = np.linspace(0, 4, 40)
-    loss = []
-    for T_open in T_Open:
-        P_t = []
-        for t in np.arange(0, 100, 0.1):
-            P(round(t,1),T_open)
-        loss.append(np.mean([(p - P_inside) ** 2 for p in P_t]))
-        print('T_open:', T_open, 'loss:', loss[-1])
-    T_open_opt = T_Open[np.argmin(loss)]
-    print('最优每次开阀时长:', T_open_opt,file=f)
-    print('最小均方误差:', min(loss),file=f)
-    plot_2(T_Open, loss)
+print("数据已保存到 t_n_data.csv 文件中")
 
-# 当稳定压力为100MPa时，每个周期内开阀时间为0.2876ms，
-# 这里是默认压力已经稳定在100MPa并且开阀时间每次都一样,从而反推出开阀时间
-# 当稳定压力为150MPa时，每个周期内开阀时间为0.7518ms
-# 那么我们能不能在100ms中设置几个固定的单向阀开启时间点，因为开一次要10ms冷却，//
-# 所以这些时间点要至少间隔10ms，
-# 因为我们反推出的开阀时间很小，
-# 我们假设开阀时间在0-1ms，
-# 那我们可以每11ms设置一个开阀的时间点。
-# 一个100ms周期内放10个。那么优化得到的是一个向量
+with open('result\\result_2.txt', 'w',encoding='UTF-8') as f:
+    # 找到最接近 t_e1, t_e2 和 t_e3 的 t 值以及对应的 delt_t
+    closest_t_e1, closest_delt_t_e1 = find_closest(t_e1, t_n)
+    closest_t_e2, closest_delt_t_e2 = find_closest(t_e2, t_n)
+    closest_t_e3, closest_delt_t_e3 = find_closest(t_e3, t_n)
+
+    print("最接近 t_e1 的 t 值为:", closest_t_e1, "对应的 delt_t 为:", closest_delt_t_e1, file=f)
+    print("最接近 t_e2 的 t 值为:", closest_t_e2, "对应的 delt_t 为:", closest_delt_t_e2, file=f)
+    print("最接近 t_e3 的 t 值为:", closest_t_e3, "对应的 delt_t 为:", closest_delt_t_e3, file=f)
+
