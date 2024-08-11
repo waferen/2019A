@@ -57,8 +57,11 @@ def index(t):
     return int(100*round(t,2))
 
 # return 油泵质量
-def M_pump(t):
+def M_pump(t,T):
     m_pump_new = m_pump[index(t-delta_t)]-rho_pump[index(t-delta_t)]*I[index(t-delta_t)]*delta_t
+    if t % T < 0.1:
+        print(t)
+        m_pump_new+=m_pump[0]
     m_pump.append(m_pump_new)
     return m_pump_new
 
@@ -138,7 +141,7 @@ p = [100] # 油管压力
 e = [0]
 rho_tube = [0.85] # 燃油密度
 # 角速度的遍历范围
-w_range = np.arange(10000, 20000, 1)
+w_range = np.arange(0, 2, 0.1)
 loss_values = []
 w_values = []
 # 遍历角速度并计算对应的损耗
@@ -152,19 +155,19 @@ for w in w_range:
     p = [100]  # 油管压力
     I = [0]
     e = [0]
-    T = 2 * np.pi / w  # 周期
+    T = 2 * pai / w  # 周期
     print(w)
     for t in np.arange(0, 100, delta_t):
-        M=M_pump(t)
+        M=M_pump(t,T)
         pp=P_pump(t, T)
         P=P_tube(t)
         Rho_tube(P)
         V_pump(w, t)
         ee=E(t)
         i=I_pump(t)
-        print(i)
+        print(pp)
     p_array = np.array(p)
-    loss = (np.sum((p_array - P_inside)**2))
+    loss = (np.mean((p_array - P_inside)**2))
     loss_values.append(loss)
     w_values.append(w)
 
@@ -190,7 +193,8 @@ min_loss = min(loss_values)
 min_loss_w = w_range[loss_values.index(min_loss)]
 plt.scatter(min_loss_w, min_loss, color='r', zorder=5)
 plt.text(min_loss_w, min_loss, f'Min Loss: {min_loss:.2f} at w = {min_loss_w:.2f}', fontsize=12)
-
+# 保存图片
+plt.savefig('figs\\loss_w_2.pdf', format='pdf')
 plt.show()
         
             
