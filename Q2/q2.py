@@ -30,7 +30,7 @@ Coefficients=[ 1.00037752e-04,-1.08248140e-03, 5.47444434e+00, 1.53186841e+03]#�
 peak =7.24 # 峰值
 valley = 2.41 # 谷值
 V_pump_min = 20 # 泵最小容积
-V_pump_max = V_pump_min+pai*(5/2)**2*(peak-valley)=114.78875000000001 # 初始容积(泵最大容积)
+V_pump_max = V_pump_min+pai*(5/2)**2*(peak-valley) # 初始容积(泵最大容积)=114.78875000000001
 
 
 delta_t = 0.01 # 时间间隔
@@ -70,8 +70,6 @@ def V_pump(w,t):
 
 # return 油泵压力，同时解出油泵密度
 def P_pump(t,T):
-    if t % T == 0:
-        res = 0.5
     res = m_pump[index(t)]/v_pump[index(t)]
     p_pump.append(res)
     rho_pump.append(rho_Pump(res))
@@ -131,12 +129,12 @@ def E(t):
 # 主程序
 
 # 初始化
-rho_pump=[0.5] # 初始泵油密度
+rho_pump=[0.85] # 初始泵油密度
 m_pump = [rho_pump[0]*V_pump_max] # 初始泵油质量
 p_pump = [m_pump[0]/V_pump_max] # 初始泵油压力
 v_pump = [V_pump_max] # 初始泵容积
 I = [0] 
-p = [0] # 油管压力
+p = [100] # 油管压力
 e = [0]
 rho_tube = [0.85] # 燃油密度
 # 角速度的遍历范围
@@ -145,10 +143,10 @@ loss_values = []
 w_values = []
 # 遍历角速度并计算对应的损耗
 for w in w_range:
-    # 重
+    # 重置
     rho_pump = [0.5]  # 初始泵油密度
     m_pump = [rho_pump[0] * V_pump_max]  # 初始泵油质量
-    p_pump = [m_pump[0] / V_pump_max]  # 初始泵油压力
+    p_pump = [160]  # 初始泵油压力
     v_pump = [V_pump_max]  # 初始泵容积
     rho_tube = [0.85] # 燃油密度
     p = [100]  # 油管压力
@@ -162,10 +160,10 @@ for w in w_range:
         P=P_tube(t)
         Rho_tube(P)
         V_pump(w, t)
-        E(t)
-        I_pump(t)
+        ee=E(t)
+        i=I_pump(t)
+        print(i)
     p_array = np.array(p)
-    print(p_array)
     loss = (np.sum((p_array - P_inside)**2))
     loss_values.append(loss)
     w_values.append(w)
